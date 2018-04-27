@@ -2,7 +2,19 @@
 /* 		- via asserts: */
 /*			- allow user to add db information */
 
+/* starts the assistant */
+clue_assistant :- game_setup, start_assistant.
 
+/* gathers all game setup info from the user. */
+game_setup :- set_players, set_rooms, set_weapons.
+
+set_players :- 
+	write('Enter player names in the order of play. Enter stop when all players have been entered:'),
+	read(Player),
+	dif(Player,stop),
+	get_players().
+
+get_players([]).
 /* prints out the database */
 # print_db([]).
 # print_db([H|T]) :- write(H), nl, print_db(T).
