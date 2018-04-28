@@ -1,8 +1,20 @@
 /* need  a user interface */
 /* need a way to track whose turn it currently is */
 /* need a way to make sure duplicates of rooms or players or weapons don't happen */
-/* need a way to print the database */
 /* might be better start db with predicates for all possible solution weapons, suspects and rooms, then remove predicates info is discovered */
+/* might be better to wrap each db predicate in one general predicate as well for simplified printing */
+
+/* DATABASE PREDICATES */
+/* player(Name) */
+/* weapon(Name) */
+/* suspect(Name) */
+/* room(Name) */
+/* play_order(Player, OrderNumber) */
+/* not_solution_weapon(Name) */
+/* not_solution_room(Name) */
+/* not_solution_suspect(Name) */
+/* player_information(Player,Information) */
+/* suggestion(Suspect,Weapon,Room) */
 
 
 /* Takes in a list of players and recursively creates the individual player predicates */
@@ -46,7 +58,40 @@ unchecked_weapon :- findall(weapon,not(not_solution_weapon(X)), Z), length(Z,N),
 unchecked_suspect :- findall(suspect,not(not_solution_suspect(X)), Z), length(Z,N), N == 1.
 unchecked_room :- findall(room,not(not_solution_room(X)), Z), length(Z,N), N == 1.
 
+/* Prints the contents of the database */
+print_db:- 
+	write("Player(s):"), 
+	nl,
+	forall(player(P), writeln(P)),
+	write("Order of Play:"),
+	nl,
+	forall(play_order(Plyr,O), writeln(Plyr), writeln(O)),
+	write("Weapon(s):"),
+	nl,
+	forall(weapon(W), writeln(W)),
+	write("Suspect(s):"),
+	nl,
+	forall(suspect(S),writeln(S)),
+	write("Room(s):"),
+	nl,
+	forall(room(R),writeln(R)),
+	write("Non-Solution Weapon(s):"),
+	nl,
+	forall(not_solution_weapon(Wpn), writeln(Wpn)),
+	write("Non-Solution Suspect(s):"),
+	nl,
+	forall(not_solution_suspect(Sspct), writeln(Sspct)),
+	write("Non-Solution Room(s):"),
+	nl,
+	forall(not_solution_room(Rm), writeln(Rm)),
+	write("Information from Player(s):"),
+	nl,
+	forall(player_information(Pl,Info), writeln(Pl), writeln(Info)),
+	write("Previous Suggestion(s):"),
+	nl,
+	forall(suggestion(Sgg),writeln(Sgg)).
 
+	
 /* OLD CODE THAT MAY BE HELPFUL LATER */
 /* set_players :- write('List player names in the order of play, separated by commas:'), nl, get_players. */
 /* get_players :- read_string(X), atom_string(X,Players_string), split_string(Players_string, ",", "", Players), write(Players).*/
