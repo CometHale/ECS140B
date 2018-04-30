@@ -6,35 +6,19 @@ Welcome to Clue Assistant. This program basically works as a notepad as you trav
 It can record all your moves and suggestions and will hold all the necessary information you need as well as tell you when to make an accusation.
 However, it cannot tell you what your next suggestion can be nor can it track and other player's suggestions (and the cards shown to another player).
 
-Before using our Clue Assistant, you must first set up the logistics:
-create_players() : - takes in a list of players 
-                   - Ex. create_players(["Miss Scarlet", "Mr. Green"]).
-create_suspects() : - takes in a list of suspects
-                    - Ex. create_suspects(["Miss Scarlet", "Mr. Green", "Prof Plum"])
-create_rooms() : takes in a list of rooms
-create_weapons() : takes in a list of weapons
-set_player_play_order : - what is the turn order of the players
-                        - takes in a Player and an Order Number 
-                        - Ex. set_player_play_order("Miss Scarlet", 1). (Miss Scarlet is the first person to move)
+Simply type in "clue_assistant" to start our program and the program will have instructions for you to follow. 
 
-Once you have all the logistics set up and done, you can now use our 'print_db' command to view your notepad.
-By simply typing 'print_db.', a list will be printed out with all the information you need to make the next suggestion or accusation.
+When entering in the cards, players, weapons, rooms, please wrap them in quotes in order for it to be properly be entered into the database. Thank you. 
 
-When you first get your cards, you can put them into the database using the command:
-mark_known_information(Card) - which will automatically mark the Card as a non-solution
-
-You can record your suggestions by using the command:
-made_suggestion(Suspect, Weapon, Room)
-
-After making a suggestion, you can then record what the other players show you with the command:
-received_information(Player, Card) where Player is the player who is showing you the card and Card is the card they are showing you. Also, 
-the Clue Assistant will also automatically mark the cards you are shown as a non-solution.
-
-You can also use the command 'enough_information' to check if you have enough evidence to make an accusation.
-By simply typing 'enough_information.', it will either print 'false' (not enough evidence) or announce that you are able to make an accusation.
+When entering in the Turn Order, please enter in a number. For example, if Miss Scarlet is going first, then her Turn Order would be 1 and if Professor Plum
+goes second, then her Turn Order would be 2. 
 
 We hope you enjoy using our Clue Assistant! Happy murder solving!
 */
+
+%Documentation
+help :- 
+	writeln("Welcome to Clue Assistant. This program basically works as a notepad as you traverse through the mysteries of the Clue board.\nIt can record all your moves and suggestions and will hold all the necessary information you need as well as tell you when to make an accusation.\nHowever, it cannot tell you what your next suggestion can be nor can it track and other player\'s suggestions (and the cards shown to another player).\n\nWhen entering in the cards, players, weapons, rooms, please wrap them in quotes in order for it to be properly be entered into the database. \n\nWhen entering in the Turn Order, please enter in a number. For example, if Miss Scarlet is going first, then her Turn Order would be 1 and if Professor Plum goes second, then her Turn Order would be 2. \n\nWe hope you enjoy using our Clue Assistant! Happy murder solving!\n").
 
 /* DATABASE PREDICATES */
 /* player(Name) */
@@ -47,7 +31,6 @@ We hope you enjoy using our Clue Assistant! Happy murder solving!
 /* not_solution_suspect(Name) */
 /* player_information(Player,Information) */
 /* suggestion(Suspect,Weapon,Room) */
-
 
 /* default facts so no error shows up when printing an empty db */
 player("empty").
@@ -111,13 +94,14 @@ made_suggestion(Suspect,Weapon,Room) :- suspect(Suspect), weapon(Weapon), room(R
 
 /* Determines if there's enough information to make an accusation */
 /* There's enough information to make an accusation if there are only one of each card type left unaccounted for */
-enough_information :- unchecked_weapon(W), unchecked_suspect(S), unchecked_room(R), writef("You have enough evidence! It's time to make an accusation.\nAccuse %w of murder using 	a %w in the %w!", [S, W, R]).
+enough_information :- unchecked_weapon(W), unchecked_suspect(S), unchecked_room(R), writef("You have enough evidence! It's time to make an accusation.\nAccuse %w of murdering someone in the %w by using a %w!\n\n", [S, R, W]).
 unchecked_weapon(L) :- findall(X, (weapon(X),not(not_solution_weapon(X))), Z), length(Z,N), N == 1,  nth0(0, Z, L).
 unchecked_suspect(L) :- findall(X, (suspect(X),not(not_solution_suspect(X))), Z), length(Z,N), N == 1,  nth0(0, Z, L).
 unchecked_room(L) :- findall(X, (room(X),not(not_solution_room(X))), Z), length(Z,N), N == 1,  nth0(0, Z, L).
 
 /* Prints the contents of the database */
 print_db:- 
+	nl,
 	write("Player(s):"), 
 	nl,
 	forall(player(P), writeln(P)),
@@ -156,4 +140,120 @@ print_db:-
 	nl,
 	write("Previous Suggestion(s):"),
 	nl,
-	forall(suggestion(S, W, L), writef("%w, %w, %w\n", [S, W, L])).
+	forall(suggestion(S, W, L), writef("%w, %w, %w\n", [S, W, L])),
+	nl.
+
+/* Get Functions */
+getPlayers([Player|List]) :- 
+    writeln("Enter Player Name (Enter 'stop' to finish): "), 
+    read(Player),
+    dif(Player, stop),
+    getPlayers(List).
+
+getPlayers([]).
+
+getRooms([Room|List]) :- 
+    writeln("Enter Room Name (Enter 'stop' to finish): "), 
+    read(Room),
+    dif(Room, stop),
+    getRooms(List).
+
+getRooms([]).
+
+getSuspects([Suspect|List]) :- 
+    writeln("Enter Suspect Name (Enter 'stop' to finish): "), 
+    read(Suspect),
+    dif(Suspect, stop),
+    getSuspects(List).
+
+getSuspects([]).
+
+getWeapons([Weapon|List]) :- 
+    writeln("Enter Weapon Name (Enter 'stop' to finish): "), 
+    read(Weapon),
+    dif(Weapon, stop),
+    getWeapons(List).
+
+getWeapons([]).
+
+getPlayOrder([Player|List]) :-
+ 	writeln("Enter the Player Name: (Enter 'stop' to finish)"),
+ 	read(Player),
+ 	dif(Player, stop),
+ 	writeln("Enter the Player's Turn Order: "),
+ 	read(Order),
+ 	set_player_play_order(Player, Order),
+ 	getPlayOrder(List).
+
+getPlayOrder([]).
+
+getCards([Card|List]) :-
+		writeln("Enter Your Card (Enter 'stop' to finish): "), 
+    read(Card),
+    dif(Card, stop),
+    mark_known_information(Card),
+    getCards(List).
+
+getCards([]).
+
+getSuggestion() :-
+	writeln("Enter your Suggested Suspect: "),
+	read(Suspect),
+	writeln("Enter your Suggested Weapon: "),
+	read(Weapon),
+	writeln("Enter your Suggested Room: "),
+	read(Room),
+	made_suggestion(Suspect, Weapon, Room),
+	writeln("Suggestion Added\n").
+
+getInformation() :-
+	writeln("Enter the Player who has shown you a card: "),
+	read(Player),
+	writeln("Enter the Card they showed you: "),
+	read(Card),
+	received_information(Player, Card),
+	writeln("New Information Added To Database\n").
+
+useInput(Num) :- Num is 1, setup_game.
+useInput(Num) :- Num is 2, print_db.
+useInput(Num) :- Num is 3, getCards(X).
+useInput(Num) :- Num is 4, getSuggestion.
+useInput(Num) :- Num is 5, getInformation.
+useInput(Num) :- Num is 6, enough_information.
+useInput(Num) :- Num is 6, not(enough_information), writeln("You don't have enough information to make an accusation yet. Keep investigating!\n").
+useInput(Num) :- Num is 7, help.
+
+getUserInput([Num|List]) :-
+	writeln("What would you like to do? Enter the corresponding number. (Enter 'stop' to finish)\n 1) Set Up the Game Board\n 2) Print Database\n 3) Enter your cards into the database\n 4) Record your Suggestion\n 5) Record what other players show you\n 6) Check if you can make an accusation\n 7) Documentation"),
+	read(Num),
+	dif(Num, stop),
+	useInput(Num),
+	getUserInput(List).
+
+getUserInput([]).
+
+/* Clue Assistant Interface */
+clue_assistant :-
+	getUserInput(List),
+	writeln("Clue Assistant is shutting down. Thank you for using us.").
+
+setup_game :- 
+	writeln("Enter Players"),
+	getPlayers(Players),
+	create_players(Players), 
+	writeln("Players Added\n"),
+	writeln("Enter Player Turn Order"),
+	getPlayOrder(Order),
+	writeln("Player Turn Order Added\n"),
+	writeln("Enter Suspects"),
+	getSuspects(Suspects),
+	create_suspects(Suspects),
+	writeln("Suspects Added\n"),
+	writeln("Enter Weapons"),
+	getWeapons(Weapons),
+	create_weapons(Weapons),
+	writeln("Weapons Added\n"),
+	writeln("Enter Rooms"),
+	getRooms(Rooms),
+	create_rooms(Rooms),
+	writeln("Rooms Added\n").
