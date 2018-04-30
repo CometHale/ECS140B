@@ -8,14 +8,14 @@ However, it cannot tell you what your next suggestion can be nor can it track an
 
 Before using our Clue Assistant, you must first set up the logistics:
 create_players() : - takes in a list of players 
-								 - Ex. create_players(["Miss Scarlet", "Mr. Green"]).
+                   - Ex. create_players(["Miss Scarlet", "Mr. Green"]).
 create_suspects() : - takes in a list of suspects
-									- Ex. create_suspects(["Miss Scarlet", "Mr. Green", "Prof Plum"])
+                    - Ex. create_suspects(["Miss Scarlet", "Mr. Green", "Prof Plum"])
 create_rooms() : takes in a list of rooms
 create_weapons() : takes in a list of weapons
 set_player_play_order : - what is the turn order of the players
-												- takes in a Player and an Order Number 
-												- Ex. set_player_play_order("Miss Scarlet", 1). (Miss Scarlet is the first person to move)
+                        - takes in a Player and an Order Number 
+                        - Ex. set_player_play_order("Miss Scarlet", 1). (Miss Scarlet is the first person to move)
 
 Once you have all the logistics set up and done, you can now use our 'print_db' command to view your notepad.
 By simply typing 'print_db.', a list will be printed out with all the information you need to make the next suggestion or accusation.
