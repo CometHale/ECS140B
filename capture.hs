@@ -357,6 +357,60 @@ legal_flag_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2,
   -- move isn't legal
   |otherwise = [] 
 
+static_eval :: [Char] -> Char -> Int
+static_eval board player 
+    | player == 'w' && length (filter (\c -> c == 'B') board) == 0  = 50
+    | player == 'w' && length (filter (\c -> c == 'W') board) == 0  = -50
+    | player == 'b' && length (filter (\c -> c == 'W') board) == 0  = 50
+    | player == 'b' && length (filter (\c -> c == 'B') board) == 0  = -50
+    | otherwise                                               = 5 * pawns_near_flag board player (floor (sqrt (fromIntegral (length board)))) (find_flag_index board player) 0
+
+
+{-
+    Description: Counts nearby pawns near flag 
+    Expects: 
+        -- Board to be evaluated
+        -- Player 'w' or 'b'
+        -- width of board
+        -- Index Where Flag is 
+        -- current index
+    Returns:
+        -- number of pawns
+-}
+
+pawns_near_flag :: [Char] -> Char -> Int -> Int -> Int -> Int
+pawns_near_flag board player width flag_index curr_index
+    | board == []                                                                                             = 0
+    | curr_index == flag_index - 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player           = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player           = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + width - 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player   = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + width && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player       = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + width + 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player   = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | otherwise                                                                                               = 0 + pawns_near_flag (tail board) player width flag_index (curr_index + 1)
+
+{-
+  
+    Expects: 
+        -- Board to be evaluated
+        -- Player 'w' or 'b'
+    Returns:
+        -- Index
+-}
+
+
+{-
+    Description: Returns index of where player flag is 
+    Expects: 
+        -- Board to be evaluated
+        -- Player 'w' or 'b'
+    Returns:
+        -- Index
+-}
+find_flag_index :: [Char] -> Char -> Int
+find_flag_index board player
+    | player == 'w' && (head board) == 'W'    = 0
+    | player == 'b' && (head board) == 'B'    = 0
+    | otherwise               = 1 + find_flag_index (tail board) player
 
 move_pawn_left :: Board -> Space -> [Board]
 move_pawn_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
