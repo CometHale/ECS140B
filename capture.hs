@@ -354,6 +354,62 @@ legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos
 -- generate_move :: Board -> Char -> Float -> Board
 
 
+{-
+    Description: Evaluates board with static evaluation
+        Strategy:
+            1) Number of pawns surrounding player's flag (how vulnerable is flag) +numPawns * 5
+            2) Player wins game +50
+            3) Player loses game -50
+    Expects: 
+        -- Board to be evaluated
+        -- Player Character 'w' or 'b'
+    Returns:
+        -- Evaluation Number
+
+-}
+
+static_eval :: [Char] -> Char -> Int
+static_eval board player 
+    | player == 'w' && length (filter (\c -> c == 'B') board) == 0  = 50
+    | player == 'w' && length (filter (\c -> c == 'W') board) == 0  = -50
+    | player == 'b' && length (filter (\c -> c == 'W') board) == 0  = 50
+    | player == 'b' && length (filter (\c -> c == 'B') board) == 0  = -50
+    | otherwise                                               = 5 * pawns_near_flag board player (find_flag_index board player) 0
+
+
+{-
+    Description: Counts nearby pawns near flag 
+    Expects: 
+        -- Board to be evaluated
+        -- Player 'w' or 'b'
+        -- Index Where Flag is 
+        -- current index
+    Returns:
+        -- number of pawns
+-}
+
+pawns_near_flag :: [Char] -> Char -> Int -> Int -> Int
+pawns_near_flag board player flag_index curr_index
+    | board == []                                                                                                             = 0
+    | (curr_index >= flag_index - 4 && (head board) == player) || (curr_index <= flag_index + 4 && (head board) == player)    = 1 + pawns_near_flag (tail board) player flag_index (curr_index + 1)
+    | otherwise                                                                                                               = 0 + pawns_near_flag (tail board) player flag_index (curr_index + 1)
+
+
+{-
+    Description: Returns index of where player flag is 
+    Expects: 
+        -- Board to be evaluated
+        -- Player 'w' or 'b'
+    Returns:
+        -- Index
+-}
+find_flag_index :: [Char] -> Char -> Int
+find_flag_index board player
+    | player == 'w' && (head board) == 'W'    = 0
+    | player == 'b' && (head board) == 'B'    = 0
+    | otherwise               = 1 + find_flag_index (tail board) player
+
+
 
 {-
 capture_helper :: [String] -> Char -> Int -> Char -> Int -> String -- needs to be changed; function stub
