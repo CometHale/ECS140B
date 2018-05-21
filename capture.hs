@@ -176,31 +176,85 @@ is_beginning_board state = False -- needs to be changed; function stub
     -- A Board representing the game board at the given state
 convert_input :: String -> Board -> Float -> Board
 convert_input [] board (_) = board
-convert_input (x:xs) (Board {spaces=spcs, width=w}) xval
-  | xval < w = convert_input xs (
+convert_input (x:xs) (Board {spaces=spcs, width=w}) ypos
+    |(mod' (fromIntegral (length spcs)) w) < (w - 1) && ypos <= (w - 1)= convert_input xs (
         Board {spaces=spcs ++ [
             (create_space
                 x 
-                xval
                 (mod' (fromIntegral (length spcs)) w)
+                ypos
+                
             )
             ],
             width=w
         }
     )
-    (xval + 1)
-  |otherwise = convert_input xs (
+    ypos
+    |(mod' (fromIntegral (length spcs)) w) == (w - 1) && ypos <= (w - 1) = convert_input xs (
         Board {spaces=spcs ++ [
             (create_space
                 x 
+                (mod' (fromIntegral (length spcs)) w)
+                ypos
+                
+            )
+            ],
+            width=w
+        }
+    )
+    (ypos + 1)
+    | otherwise = convert_input xs (
+        Board {spaces=spcs ++ [
+            (create_space
+                x 
+                (mod' (fromIntegral (length spcs)) w)
                 0
-                (mod' (fromIntegral (length spcs)) w)
+                
             )
             ],
             width=w
         }
     )
-    1
+    0
+
+
+  -- |(mod' (fromIntegral (length spcs)) w) < w && xpos < w  = convert_input xs (
+  --       Board {spaces=spcs ++ [
+  --           (create_space
+  --               x 
+  --               xpos
+  --               (mod' (fromIntegral (length spcs)) w)
+  --           )
+  --           ],
+  --           width=w
+  --       }
+  --   )
+  --   xpos
+  -- |(mod' (fromIntegral (length spcs)) w) == (w - 1) = convert_input xs (
+  --       Board {spaces=spcs ++ [
+  --           (create_space
+  --               x 
+  --               0
+  --               (mod' (fromIntegral (length spcs)) w)
+  --           )
+  --           ],
+  --           width=w
+  --       }
+  --   )
+  --   0
+  -- |(mod' (fromIntegral (length spcs)) w) < (w - 1) = 
+  -- |otherwise = convert_input xs (
+  --       Board {spaces=spcs ++ [
+  --           (create_space
+  --               x 
+  --               xpos
+  --               (mod' (fromIntegral (length spcs)) w)
+  --           )
+  --           ],
+  --           width=w
+  --       }
+  --   )
+  --   (xpos + 1)
 
 -- Description: Given a piece, an x coordinate and a y coordinate, creates a Space 
 -- Expects:
