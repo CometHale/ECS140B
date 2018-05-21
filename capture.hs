@@ -361,11 +361,27 @@ legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos
 {- For each space, try moving it's occupent in valid ways -}
 -- generate_move :: Board -> Char -> Float -> Board
 
+{-
+    Description: Evaluates leaf state then propagates values up and picks best move
+    Expects: 
+        -- Tree of Moves 
+        -- Board and History
+        -- List Parents
+        -- Player Character 'w' or 'b'
+        -- Current Player (determines if row is min or max)
+    Returns:
+        -- next move
+-}
 
+-- choose_move :: [[String]] -> [String] -> [String] -> Char -> Char -> String
+-- choose_move tree board_history parents_list player curr_player 
+  -- | -- go through each list and evalusate and propagate up
+  -- | 
+  -- |
 {-
     Description: Evaluates board with static evaluation
         Strategy:
-            1) Number of pawns surrounding player's flag (how vulnerable is flag) +numPawns * 5
+            1) Number of pawns surrounding player's flag (how vulnerable is flag + counts how many pawns you have) +numPawns * 5
             2) Player wins game +50
             3) Player loses game -50
     Expects: 
@@ -376,13 +392,14 @@ legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos
 
 -}
 
+
 static_eval :: [Char] -> Char -> Int
 static_eval board player 
     | player == 'w' && length (filter (\c -> c == 'B') board) == 0  = 50
     | player == 'w' && length (filter (\c -> c == 'W') board) == 0  = -50
     | player == 'b' && length (filter (\c -> c == 'W') board) == 0  = 50
     | player == 'b' && length (filter (\c -> c == 'B') board) == 0  = -50
-    | otherwise                                               = 5 * pawns_near_flag board player (find_flag_index board player) 0
+    | otherwise                                               = 5 * pawns_near_flag board player (floor (sqrt (fromIntegral (length board)))) (find_flag_index board player) 0
 
 
 {-
@@ -390,17 +407,31 @@ static_eval board player
     Expects: 
         -- Board to be evaluated
         -- Player 'w' or 'b'
+        -- width of board
         -- Index Where Flag is 
         -- current index
     Returns:
         -- number of pawns
 -}
 
-pawns_near_flag :: [Char] -> Char -> Int -> Int -> Int
-pawns_near_flag board player flag_index curr_index
-    | board == []                                                                                                             = 0
-    | (curr_index >= flag_index - 4 && (head board) == player) || (curr_index <= flag_index + 4 && (head board) == player)    = 1 + pawns_near_flag (tail board) player flag_index (curr_index + 1)
-    | otherwise                                                                                                               = 0 + pawns_near_flag (tail board) player flag_index (curr_index + 1)
+pawns_near_flag :: [Char] -> Char -> Int -> Int -> Int -> Int
+pawns_near_flag board player width flag_index curr_index
+    | board == []                                                                                             = 0
+    | curr_index == flag_index - 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player           = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player           = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + width - 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player   = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + width && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player       = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | curr_index == flag_index + width + 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player   = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
+    | otherwise                                                                                               = 0 + pawns_near_flag (tail board) player width flag_index (curr_index + 1)
+
+{-
+  
+    Expects: 
+        -- Board to be evaluated
+        -- Player 'w' or 'b'
+    Returns:
+        -- Index
+-}
 
 
 {-
@@ -416,95 +447,6 @@ find_flag_index board player
     | player == 'w' && (head board) == 'W'    = 0
     | player == 'b' && (head board) == 'B'    = 0
     | otherwise               = 1 + find_flag_index (tail board) player
-
-
-
-{-
-capture_helper :: [String] -> Char -> Int -> Char -> Int -> String -- needs to be changed; function stub
-capture_helper history initial_fealty look_ahead_count current_fealty current_look_ahead_count = static_board_eval (generate_moves (head history) [])
-
--}
-
--- | current_look_ahead_count == look_ahead_count  = ""
-
-
-{-
-    Convert input board string into a list of rows
-
-    to generate a list of moves, try moving each piece in it's legal ways, one piece at a time
--}
--- Description: Generates a list of lists of moves that represent adversarial trees
--- Expects: 
-        -- A String representing the current board state
-        -- A list of lists of strings representing the adversarial trees possible based on the current board state
--- Returns:
-    -- A list of lists of Strings representing the various child adversarial trees of the initial board state
-    -- (i.e. the first one in the list is the leftmost child tree of the initial state, the next one is the next leftmost, etc.)
-{-
-
-generate_moves :: String -> [[String]] -> [[String]] -- needs to call generate_move_option until a move is repeated
-generate_moves state [] = generate_move_option state []
-generate_moves state moves = null moves \= True && generate_move_option state moves
-
--- a step in the tree is all of the possible moves a player could make based on the other player's previous moves
--- Description: Generates a move based on the current board state and the current player
--- Expects: 
-        -- A String representing the current board state
-        -- A Char representing the player whose turn it is
-        -- A String representing the eventual output
--- Returns:
-    -- A String representing a possible next move for the player
-
-generate_move_option :: String -> Char -> String
-generate_move_option [x:xs] player result
-  | elem x "-" = generate_move_option xs player result
-  | elem x "wW" && elem player "w" && (head xs)
-
-
--}
-
-
-{-
-
-  -- | null result && null xs \= True = generate_move_options xs (""++(generate_move x)):[]):result -- generate a move for the piece represented by x
-  -- | null result && null xs = error "generate_move_options error -- state and result were empty"
-  -- | null result \= True && null xs = result
-  -- | otherwise = generate_move_options xs (++(generate_move x)):[]):result
--}
-
-
-
--- a step in the tree is all of the possible moves a player could make based on the other player's previous moves
--- Description: Generates a list of lists of moves that represent an adversarial tree
--- Expects: 
-        -- A list of lists of Strings representing the initial board state and a history
-        -- A Char representing whose turn it currently is
-        -- An Int representing the number of moves to look ahead to
--- Returns:
-    -- A list of lists of Strings representing the various child adversarial trees of the initial board state
-    -- (i.e. the first one in the list is the leftmost child tree of the initial state, the next one is the next leftmost, etc.)
-
--- generate_adversarial_trees :: String -> [[String]] -> [[String]]
-
-{-
-
--- generate_adversarial_trees start_state [] = (generate_tree start_state):[]
--- generate_adversarial_trees start_state result
---     | elem (generate_tree start_state) result /= True = result
---     | otherwise = result
--}
-
-
--- move_generator => [[String]] => Char => Int => [[String]]
--- move_generator history player look_ahead_count
-  -- | look_ahead_count == 0  = ""
-  -- | otherwise 
-
-
--- Description:
--- Expects:
--- Returns:
-
 
 
 
