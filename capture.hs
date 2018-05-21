@@ -79,23 +79,21 @@ data Space = Space {xpos::Float, ypos::Float, occupant::Char} deriving (Eq, Show
 data Board =  Board {spaces :: [Space], width :: Float} deriving (Eq, Show, Read) -- One state of the game board
 -- [Board] -- A list of game states (as Boards), with the first being the current state
 
-capture :: [String] -> Char -> Float -> String
+capture :: [String] -> Char -> Float -> [[String]] -- !!!!!!!!!!!!!!!!!!!!!!!! OUTPUT NEEDS TO BE A STRING
 capture history fealty lookahead_count
   | validate_input history fealty lookahead_count && is_beginning_board (head history) && elem fealty "b" = 
     -- convert_output (
-        __to_eval__build_adversarial_tree(
-            (
-                capture_helper
-                    (convert_input 
-                        (head history)
-                        (Board {spaces=[], width=( sqrt (fromIntegral (length (head history))))})
-                        0
-                    )
-                    fealty
-                    lookahead_count
-                    'w'
+        __to_eval__build_adversarial_tree
+            (capture_helper
+                (convert_input 
+                    (head history)
+                    (Board {spaces=[], width=( sqrt (fromIntegral (length (head history))))})
                     0
                 )
+                fealty
+                lookahead_count
+                'w'
+                0
             )
             []
         -- )
@@ -109,7 +107,7 @@ capture history fealty lookahead_count
     -- )
     -- convert_input history fealty lookahead_count Board {spaces=[], width=(sqrt (length (head history)))}
   -- capture_helper history fealty lookahead_count fealty 0 -- run alg normally
-  | otherwise  = "False" -- Change this to something that makes more sense
+  | otherwise  = [] -- Change this to something that makes more sense !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 -- Description: Given a list of board states, a player and a max lookahead count, validates the input
 -- Expects: 
@@ -157,7 +155,7 @@ valid_state_char character
 -- Returns:
     -- A boolean
 is_beginning_board :: String -> Bool
-is_beginning_board state = False -- needs to be changed; function stub
+is_beginning_board state = False -- needs to be changed; function  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 -- Description: Given state, and a (preferably empty) Board, creates a Board based on the state
@@ -220,13 +218,13 @@ convert_input (x:xs) (Board {spaces=spcs, width=w}) ypos
 create_space :: Char -> Float -> Float -> Space
 create_space occ x y = (Space {xpos=x, ypos=y, occupant=occ})
 
--- convert_output :: Board -> String -- stub 
+-- convert_output :: Board -> String -- stub !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 -- convert_output (Board {spaces = spcs, width=w}) = "" ++ show spcs
 
 __to_eval__build_adversarial_tree :: [[Board]] -> [[String]] -> [[String]] 
-__to_eval__build_adversarial_tree (x:xs) adversarial_tree
-  |null (x:xs) = adversarial_tree
-  |otherwise = __to_eval__build_adversarial_tree xs ((__to_eval__build_adversarial_path x [] []):adversarial_tree)
+__to_eval__build_adversarial_tree boards adversarial_tree
+  |null boards = adversarial_tree
+  |otherwise = __to_eval__build_adversarial_tree (tail boards) ((__to_eval__build_adversarial_path (head boards) [] []):adversarial_tree)
 
 __to_eval__build_adversarial_path :: [Board] -> String -> [String] -> [String]
 __to_eval__build_adversarial_path ((Board {spaces = spcs, width=w}):xs) building_state path
@@ -253,27 +251,13 @@ __build_state_string (Board {spaces = ((Space {xpos=x, ypos=y, occupant=occ}):xs
 capture_helper :: Board -> Char -> Float -> Char -> Float -> [[Board]]
 capture_helper board player max_lookahead current_player current_lookahead = generate_trees board player max_lookahead current_player current_lookahead []
 
--- Description: Given a list of AdversarialTrees, determines what Board represents the best move for the player
--- Expects:
-    -- A list of AdversarialTrees representing the different possible results of the next few moves
--- Returns:
-    -- A Board
-static_board_eval :: [[Board]] -> Board -- this is a stub
-static_board_eval trees = (head (head trees))
-
-
 -- Description:
 -- Expects:
 -- Returns:
-generate_trees :: Board -> Char -> Float -> Char -> Float -> [[Board]] -> [[Board]] -- this is a stub
+generate_trees :: Board -> Char -> Float -> Char -> Float -> [[Board]] -> [[Board]]
 generate_trees (Board {spaces = spcs, width=w}) player max_lookahead current_player current_lookahead trees
   | null spcs = trees
   | otherwise = (generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead) ++ trees
--- (generate_a_tree board player max_lookahead []) ++ trees
-
-
-  -- | elem board tree = tree
-  -- | otherwise = (generate_a_tree (generate_move board player max_lookahead) player max_lookahead (board:tree))
 
 -- Description:
 -- Expects:
@@ -357,6 +341,13 @@ legal_flag_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2,
   -- move isn't legal
   |otherwise = [] 
 
+
+
+-- Description: Given a list of AdversarialTrees, determines what Board represents the best move for the player
+-- Expects:
+    -- A list of AdversarialTrees representing the different possible results of the next few moves
+-- Returns:
+    -- A Board
 static_eval :: [Char] -> Char -> Int
 static_eval board player 
     | player == 'w' && length (filter (\c -> c == 'B') board) == 0  = 50
