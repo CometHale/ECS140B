@@ -286,12 +286,18 @@ generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant=
 --   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
 -- flag moves
 generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'}) player max_lookahead
-  |elem player "w" = (move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'}) ) : []
+  |elem player "w" =
+        (move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'})):
+        (move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'})) :
+        ((move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'})) : [])
   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
   -- |elem player "w" = [] ++ [(move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )] ++ [(move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )] ++ [(move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )]
   -- |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
 generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'}) player max_lookahead
-  |elem player "b" = (move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'})) : []
+  |elem player "b" =
+    (move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'})):
+    (move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'})):
+    ((move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'})) : [])
   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
   -- |elem player "b" = ((([] ++ [(move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="B"}) )]) ++ [(move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )]) ++ [(move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )])
   -- |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
@@ -303,14 +309,16 @@ move_flag_left :: Board -> Space -> [Board]
 move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
   |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving left actually means moving right, need to check if legal move
   |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving left just means moving left need to check if legal move
--- move_flag_right :: Board -> Space -> Board
--- move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
---   |elem occ "W" = (head (filter (space_with_position (x-1) (y)) spcs)) -- for white, moving right actually means moving left, need to check if legal move
---   |elem occ "B" = (head (filter (space_with_position (x+1) (y)) spcs)) -- for black, moving right just means moving right, need to check if legal move
--- move_flag_forward :: Board -> Space -> Board
--- move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
---   |elem occ "W" = (head (filter (space_with_position (x) (y + 1)) spcs)) -- for white, moving forward actually means moving down, need to check if legal move
---   |elem occ "B" = (head (filter (space_with_position (x) (y - 1)) spcs)) -- for black, moving forward just means moving forward need to check if legal move
+
+move_flag_right :: Board -> Space -> [Board]
+move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+  |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving right actually means moving left, need to check if legal move
+  |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving right just means moving right, need to check if legal move
+
+move_flag_forward :: Board -> Space -> [Board]
+move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+  |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving forward actually means moving down, need to check if legal move
+  |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving forward just means moving forward need to check if legal move
 
 -- replace the Space in Board.spaces that has the same position as the given Space, with the given Space
 replace_space :: Board -> Space -> Board
