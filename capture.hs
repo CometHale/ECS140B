@@ -75,8 +75,9 @@ Minimax algorithm
     -- (i.e. the person whose turn it was when the function was originally called)
 
 import Data.Fixed
-data Space = Space {xpos::Float, ypos::Float, occupant::Char} deriving (Eq, Show, Read)
-data Board =  Board {spaces :: [Space], width :: Float} deriving (Eq, Show, Read)
+data Space = Space {xpos::Float, ypos::Float, occupant::Char} deriving (Eq, Show, Read) -- One 'square' on a game board
+data Board =  Board {spaces :: [Space], width :: Float} deriving (Eq, Show, Read) -- One state of the game board
+-- [Board] -- A list of game states (as Boards), with the first being the current state
 
 capture :: [String] -> Char -> Float -> String
 capture history fealty lookahead_count
@@ -217,45 +218,6 @@ convert_input (x:xs) (Board {spaces=spcs, width=w}) ypos
     )
     0
 
-
-  -- |(mod' (fromIntegral (length spcs)) w) < w && xpos < w  = convert_input xs (
-  --       Board {spaces=spcs ++ [
-  --           (create_space
-  --               x 
-  --               xpos
-  --               (mod' (fromIntegral (length spcs)) w)
-  --           )
-  --           ],
-  --           width=w
-  --       }
-  --   )
-  --   xpos
-  -- |(mod' (fromIntegral (length spcs)) w) == (w - 1) = convert_input xs (
-  --       Board {spaces=spcs ++ [
-  --           (create_space
-  --               x 
-  --               0
-  --               (mod' (fromIntegral (length spcs)) w)
-  --           )
-  --           ],
-  --           width=w
-  --       }
-  --   )
-  --   0
-  -- |(mod' (fromIntegral (length spcs)) w) < (w - 1) = 
-  -- |otherwise = convert_input xs (
-  --       Board {spaces=spcs ++ [
-  --           (create_space
-  --               x 
-  --               xpos
-  --               (mod' (fromIntegral (length spcs)) w)
-  --           )
-  --           ],
-  --           width=w
-  --       }
-  --   )
-  --   (xpos + 1)
-
 -- Description: Given a piece, an x coordinate and a y coordinate, creates a Space 
 -- Expects:
     -- A Char representing an empty space or a piece
@@ -280,8 +242,116 @@ convert_output (Board {spaces = spcs, width=w}) = "" ++ show spcs
 -- Returns:
     -- A String representing the next best move for the initial player
 
+-- decrease the lookahead count here
 capture_helper :: Board -> Char -> Float -> Char -> Float -> Board
-capture_helper (Board {spaces=spcs, width=w}) player max_lookahead current_player current_lookahead = Board {spaces=spcs, width=w}
+capture_helper board player max_lookahead current_player current_lookahead = static_board_eval (generate_trees board player max_lookahead current_player current_lookahead [])
+
+-- Description: Given a list of AdversarialTrees, determines what Board represents the best move for the player
+-- Expects:
+    -- A list of AdversarialTrees representing the different possible results of the next few moves
+-- Returns:
+    -- A Board
+static_board_eval :: [[Board]] -> Board -- this is a stub
+static_board_eval trees = (head (head trees))
+
+
+-- Description:
+-- Expects:
+-- Returns:
+generate_trees :: Board -> Char -> Float -> Char -> Float -> [[Board]] -> [[Board]] -- this is a stub
+generate_trees (Board {spaces = spcs, width=w}) player max_lookahead current_player current_lookahead trees
+  | null spcs = trees
+  | otherwise = (generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead) ++ trees
+-- (generate_a_tree board player max_lookahead []) ++ trees
+
+
+  -- | elem board tree = tree
+  -- | otherwise = (generate_a_tree (generate_move board player max_lookahead) player max_lookahead (board:tree))
+
+-- Description:
+-- Expects:
+-- Returns:
+-- needs to generate a tree based on each possible move a pawn of the current player can make
+-- for a given pawn or flag, generate all the moves it can make 
+generate_a_tree :: Board -> Space -> Char -> Float -> [[Board]]
+-- generate_a_tree board player max_lookahead tree
+ -- empty space
+generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant='-'}) player max_lookahead = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+-- pawn moves
+-- generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="w"}) player max_lookahead
+--   |elem player "w" = ((([] ++ [move_pawn_left]) ++ [move_pawn_right]) ++ [move_pawn_forward])
+--   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+-- generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="b"}) player max_lookahead
+--   |elem player "b" = ((([] ++ [move_pawn_left]) ++ [move_pawn_right]) ++ [move_pawn_forward])
+--   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+-- flag moves
+generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'}) player max_lookahead
+  |elem player "w" = (move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'}) ) : []
+  |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+  -- |elem player "w" = [] ++ [(move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )] ++ [(move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )] ++ [(move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )]
+  -- |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'}) player max_lookahead
+  |elem player "b" = (move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='B'})) : []
+  |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+  -- |elem player "b" = ((([] ++ [(move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="B"}) )]) ++ [(move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )]) ++ [(move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )])
+  -- |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+
+
+-- use filter to find the appropriate spaces in the board
+-- is there a space that has xxx position values?
+move_flag_left :: Board -> Space -> [Board]
+move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+  |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving left actually means moving right, need to check if legal move
+  |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving left just means moving left need to check if legal move
+-- move_flag_right :: Board -> Space -> Board
+-- move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+--   |elem occ "W" = (head (filter (space_with_position (x-1) (y)) spcs)) -- for white, moving right actually means moving left, need to check if legal move
+--   |elem occ "B" = (head (filter (space_with_position (x+1) (y)) spcs)) -- for black, moving right just means moving right, need to check if legal move
+-- move_flag_forward :: Board -> Space -> Board
+-- move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+--   |elem occ "W" = (head (filter (space_with_position (x) (y + 1)) spcs)) -- for white, moving forward actually means moving down, need to check if legal move
+--   |elem occ "B" = (head (filter (space_with_position (x) (y - 1)) spcs)) -- for black, moving forward just means moving forward need to check if legal move
+
+-- replace the Space in Board.spaces that has the same position as the given Space, with the given Space
+replace_space :: Board -> Space -> Board
+replace_space (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ}) = (Board {
+        spaces=((filter (space_not_with_position (x) (y)) spcs) ++ [(Space {xpos=x, ypos=y, occupant=occ})]),
+         width=w
+        })
+
+space_not_with_position :: Float -> Float -> Space -> Bool
+space_not_with_position suggested_x suggested_y (Space {xpos=x, ypos=y, occupant=occ})
+  |suggested_x /= x && suggested_y /= y = True
+  |otherwise = False
+
+space_with_position :: Float -> Float -> Space -> Bool
+space_with_position suggested_x suggested_y (Space {xpos=x, ypos=y, occupant=occ})
+  |suggested_x == x && suggested_y == y = True
+  |otherwise = False
+
+-- attempt to move Space1's occupant to Space2
+legal_move :: Board -> Space -> Space -> [Board]
+legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos=y2, occupant=occ2})
+    -- Space2 is an empty space
+  |elem occ2 "-" =   (replace_space (replace_space board (Space {xpos=x1, ypos=y1, occupant='-'})) (Space {xpos=x2, ypos=y2, occupant=occ1})):[]
+  -- move isn't legal
+  |otherwise = [] 
+
+-- legal_jump :: Board -> Space -> Space -> Space -> Board
+-- legal_jump (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos=y2, occupant=occ2})
+
+ -- (Space {xpos=x1, ypos=y1, occupant=occ1})
+
+-- Description: Given a Board, a player and the number of lookaheads, generates another Board representing another possible state of the board
+-- Expects:
+    -- A Board representing the current state of the board
+    -- A Char representing the current player
+    -- A Float representing the number of lookaheads left
+-- Returns:
+    -- A Board
+
+{- For each space, try moving it's occupent in valid ways -}
+-- generate_move :: Board -> Char -> Float -> Board
 
 
 
@@ -370,7 +440,7 @@ generate_move_option [x:xs] player result
 -- Description:
 -- Expects:
 -- Returns:
--- static_board_eval
+
 
 
 
