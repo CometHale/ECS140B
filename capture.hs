@@ -82,40 +82,31 @@ data Board =  Board {spaces :: [Space], width :: Float} deriving (Eq, Show, Read
 capture :: [String] -> Char -> Float -> String
 capture history fealty lookahead_count
   | validate_input history fealty lookahead_count && is_beginning_board (head history) && elem fealty "b" = 
-    convert_output (
-        capture_helper
-            (convert_input 
-                (head history)
-                (Board {spaces=[], width=(
-                    sqrt (
-                        fromIntegral (length (head history))
-                        )
-                )})
-                0
+    -- convert_output (
+        __to_eval__build_adversarial_tree(
+            (
+                capture_helper
+                    (convert_input 
+                        (head history)
+                        (Board {spaces=[], width=( sqrt (fromIntegral (length (head history))))})
+                        0
+                    )
+                    fealty
+                    lookahead_count
+                    'w'
+                    0
+                )
             )
-            fealty
-            lookahead_count
-            'w'
-            0
-        )
+            []
+        -- )
   -- capture_helper history fealty lookahead_count 'w' 0 -- run alg on white first, then run alg normally
   | validate_input history fealty lookahead_count && is_beginning_board (head history) /= True || is_beginning_board (head history) && elem fealty "w" =
-    convert_output (
-        capture_helper (
-            convert_input
-                (head history)
-                (Board {spaces=[], width=(
-                    sqrt (
-                        fromIntegral (length (head history))
-                    )
-            )})
-                0
-        ) 
-        fealty
-        lookahead_count
-        fealty
-        0
-    )
+    -- convert_output (
+        __to_eval__build_adversarial_tree (
+            capture_helper ((convert_input (head history) (Board {spaces=[], width=(sqrt (fromIntegral (length (head history))))}) 0)) fealty lookahead_count fealty 0
+            )
+            []
+    -- )
     -- convert_input history fealty lookahead_count Board {spaces=[], width=(sqrt (length (head history)))}
   -- capture_helper history fealty lookahead_count fealty 0 -- run alg normally
   | otherwise  = "False" -- Change this to something that makes more sense
@@ -218,6 +209,7 @@ convert_input (x:xs) (Board {spaces=spcs, width=w}) ypos
     )
     0
 
+
 -- Description: Given a piece, an x coordinate and a y coordinate, creates a Space 
 -- Expects:
     -- A Char representing an empty space or a piece
@@ -228,8 +220,23 @@ convert_input (x:xs) (Board {spaces=spcs, width=w}) ypos
 create_space :: Char -> Float -> Float -> Space
 create_space occ x y = (Space {xpos=x, ypos=y, occupant=occ})
 
-convert_output :: Board -> String
-convert_output (Board {spaces = spcs, width=w}) = "" ++ show spcs
+-- convert_output :: Board -> String -- stub 
+-- convert_output (Board {spaces = spcs, width=w}) = "" ++ show spcs
+
+__to_eval__build_adversarial_tree :: [[Board]] -> [[String]] -> [[String]] 
+__to_eval__build_adversarial_tree (x:xs) adversarial_tree
+  |null (x:xs) = adversarial_tree
+  |otherwise = __to_eval__build_adversarial_tree xs ((__to_eval__build_adversarial_path x [] []):adversarial_tree)
+
+__to_eval__build_adversarial_path :: [Board] -> String -> [String] -> [String]
+__to_eval__build_adversarial_path ((Board {spaces = spcs, width=w}):xs) building_state path
+    |null spcs = building_state:path
+    |otherwise = __to_eval__build_adversarial_path ((Board {spaces = spcs, width=w}):xs) (__build_state_string (Board {spaces = spcs, width=w}) building_state) path
+
+__build_state_string :: Board -> String -> String
+__build_state_string (Board {spaces = [], width=w}) str = str -- all spaces accounted for
+__build_state_string (Board {spaces = ((Space {xpos=x, ypos=y, occupant=occ}):xs), width=w}) str = let (ys,zs) =  splitAt (fromIntegral (round ((y*w) + x))) str in ys ++ [occ] ++ zs
+
 
 -- Description: Given a list of states, a player, a max lookahead count, the current player and the current lookahead count, 
 --  does the work of gathering the list of move subtrees
@@ -243,8 +250,8 @@ convert_output (Board {spaces = spcs, width=w}) = "" ++ show spcs
     -- A String representing the next best move for the initial player
 
 -- decrease the lookahead count here
-capture_helper :: Board -> Char -> Float -> Char -> Float -> Board
-capture_helper board player max_lookahead current_player current_lookahead = static_board_eval (generate_trees board player max_lookahead current_player current_lookahead [])
+capture_helper :: Board -> Char -> Float -> Char -> Float -> [[Board]]
+capture_helper board player max_lookahead current_player current_lookahead = generate_trees board player max_lookahead current_player current_lookahead []
 
 -- Description: Given a list of AdversarialTrees, determines what Board represents the best move for the player
 -- Expects:
@@ -278,12 +285,18 @@ generate_a_tree :: Board -> Space -> Char -> Float -> [[Board]]
  -- empty space
 generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant='-'}) player max_lookahead = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
 -- pawn moves
--- generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="w"}) player max_lookahead
---   |elem player "w" = ((([] ++ [move_pawn_left]) ++ [move_pawn_right]) ++ [move_pawn_forward])
---   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
--- generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="b"}) player max_lookahead
---   |elem player "b" = ((([] ++ [move_pawn_left]) ++ [move_pawn_right]) ++ [move_pawn_forward])
---   |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='w'}) player max_lookahead
+  |elem player "w" = 
+        -- (move_pawn_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='w'})):
+        -- (move_pawn_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='w'})) :
+        ((move_pawn_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='w'})) : [])
+  |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
+generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='b'}) player max_lookahead
+  |elem player "b" = 
+        -- (move_pawn_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='b'})):
+        -- (move_pawn_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='b'})) :
+        ((move_pawn_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='b'})) : [])
+  |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
 -- flag moves
 generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant='W'}) player max_lookahead
   |elem player "w" =
@@ -302,23 +315,22 @@ generate_a_tree (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=
   -- |elem player "b" = ((([] ++ [(move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="B"}) )]) ++ [(move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )]) ++ [(move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=_, ypos=_, occupant="W"}) )])
   -- |otherwise = generate_a_tree (Board {spaces = (tail spcs), width=w}) (head spcs) player max_lookahead
 
-
 -- use filter to find the appropriate spaces in the board
 -- is there a space that has xxx position values?
 move_flag_left :: Board -> Space -> [Board]
 move_flag_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
-  |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving left actually means moving right, need to check if legal move
-  |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving left just means moving left need to check if legal move
+  |elem occ "W" = (legal_flag_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving left actually means moving right, need to check if legal move
+  |elem occ "B" = (legal_flag_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving left just means moving left need to check if legal move
 
 move_flag_right :: Board -> Space -> [Board]
 move_flag_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
-  |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving right actually means moving left, need to check if legal move
-  |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving right just means moving right, need to check if legal move
+  |elem occ "W" = (legal_flag_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving right actually means moving left, need to check if legal move
+  |elem occ "B" = (legal_flag_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving right just means moving right, need to check if legal move
 
 move_flag_forward :: Board -> Space -> [Board]
 move_flag_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
-  |elem occ "W" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving forward actually means moving down, need to check if legal move
-  |elem occ "B" = (legal_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving forward just means moving forward need to check if legal move
+  |elem occ "W" = (legal_flag_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for white, moving forward actually means moving down, need to check if legal move
+  |elem occ "B" = (legal_flag_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y-1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ})) -- for black, moving forward just means moving forward need to check if legal move
 
 -- replace the Space in Board.spaces that has the same position as the given Space, with the given Space
 replace_space :: Board -> Space -> Board
@@ -338,119 +350,38 @@ space_with_position suggested_x suggested_y (Space {xpos=x, ypos=y, occupant=occ
   |otherwise = False
 
 -- attempt to move Space1's occupant to Space2
-legal_move :: Board -> Space -> Space -> [Board]
-legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos=y2, occupant=occ2})
+legal_flag_move :: Board -> Space -> Space -> [Board]
+legal_flag_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos=y2, occupant=occ2})
     -- Space2 is an empty space
   |elem occ2 "-" =   (replace_space (replace_space board (Space {xpos=x1, ypos=y1, occupant='-'})) (Space {xpos=x2, ypos=y2, occupant=occ1})):[]
   -- move isn't legal
   |otherwise = [] 
 
--- legal_jump :: Board -> Space -> Space -> Space -> Board
--- legal_jump (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos=y2, occupant=occ2})
 
- -- (Space {xpos=x1, ypos=y1, occupant=occ1})
+move_pawn_left :: Board -> Space -> [Board]
+move_pawn_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+  |elem occ "w" = (legal_pawn_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ}) "left") -- for white, moving left actually means moving right, need to check if legal move
+  |elem occ "b" = (legal_pawn_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ}) "left") -- for black, moving left just means moving left need to check if legal move
 
--- Description: Given a Board, a player and the number of lookaheads, generates another Board representing another possible state of the board
--- Expects:
-    -- A Board representing the current state of the board
-    -- A Char representing the current player
-    -- A Float representing the number of lookaheads left
--- Returns:
-    -- A Board
+move_pawn_right :: Board -> Space -> [Board]
+move_pawn_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+  |elem occ "W" = (legal_pawn_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x-1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ}) "right") -- for white, moving right actually means moving left, need to check if legal move
+  |elem occ "B" = (legal_pawn_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x+1) (y)) spcs)) (Space {xpos=x, ypos=y, occupant=occ}) "right") -- for black, moving right just means moving right, need to check if legal move
 
-{- For each space, try moving it's occupent in valid ways -}
--- generate_move :: Board -> Char -> Float -> Board
+move_pawn_forward :: Board -> Space -> [Board]
+move_pawn_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
+  |elem occ "W" = (legal_pawn_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ}) "forward") -- for white, moving forward actually means moving down, need to check if legal move
+  |elem occ "B" = (legal_pawn_move (Board {spaces=spcs, width=w}) (head (filter (space_with_position (x) (y+1)) spcs)) (Space {xpos=x, ypos=y, occupant=occ}) "forward") -- for black, moving forward just means moving forward need to check if legal move
 
-
-
-{-
-capture_helper :: [String] -> Char -> Int -> Char -> Int -> String -- needs to be changed; function stub
-capture_helper history initial_fealty look_ahead_count current_fealty current_look_ahead_count = static_board_eval (generate_moves (head history) [])
-
--}
-
--- | current_look_ahead_count == look_ahead_count  = ""
-
-
-{-
-    Convert input board string into a list of rows
-
-    to generate a list of moves, try moving each piece in it's legal ways, one piece at a time
--}
--- Description: Generates a list of lists of moves that represent adversarial trees
--- Expects: 
-        -- A String representing the current board state
-        -- A list of lists of strings representing the adversarial trees possible based on the current board state
--- Returns:
-    -- A list of lists of Strings representing the various child adversarial trees of the initial board state
-    -- (i.e. the first one in the list is the leftmost child tree of the initial state, the next one is the next leftmost, etc.)
-{-
-
-generate_moves :: String -> [[String]] -> [[String]] -- needs to call generate_move_option until a move is repeated
-generate_moves state [] = generate_move_option state []
-generate_moves state moves = null moves \= True && generate_move_option state moves
-
--- a step in the tree is all of the possible moves a player could make based on the other player's previous moves
--- Description: Generates a move based on the current board state and the current player
--- Expects: 
-        -- A String representing the current board state
-        -- A Char representing the player whose turn it is
-        -- A String representing the eventual output
--- Returns:
-    -- A String representing a possible next move for the player
-
-generate_move_option :: String -> Char -> String
-generate_move_option [x:xs] player result
-  | elem x "-" = generate_move_option xs player result
-  | elem x "wW" && elem player "w" && (head xs)
-
-
--}
-
-
-{-
-
-  -- | null result && null xs \= True = generate_move_options xs (""++(generate_move x)):[]):result -- generate a move for the piece represented by x
-  -- | null result && null xs = error "generate_move_options error -- state and result were empty"
-  -- | null result \= True && null xs = result
-  -- | otherwise = generate_move_options xs (++(generate_move x)):[]):result
--}
-
-
-
--- a step in the tree is all of the possible moves a player could make based on the other player's previous moves
--- Description: Generates a list of lists of moves that represent an adversarial tree
--- Expects: 
-        -- A list of lists of Strings representing the initial board state and a history
-        -- A Char representing whose turn it currently is
-        -- An Int representing the number of moves to look ahead to
--- Returns:
-    -- A list of lists of Strings representing the various child adversarial trees of the initial board state
-    -- (i.e. the first one in the list is the leftmost child tree of the initial state, the next one is the next leftmost, etc.)
-
--- generate_adversarial_trees :: String -> [[String]] -> [[String]]
-
-{-
-
--- generate_adversarial_trees start_state [] = (generate_tree start_state):[]
--- generate_adversarial_trees start_state result
---     | elem (generate_tree start_state) result /= True = result
---     | otherwise = result
--}
-
-
--- move_generator => [[String]] => Char => Int => [[String]]
--- move_generator history player look_ahead_count
-  -- | look_ahead_count == 0  = ""
-  -- | otherwise 
-
-
--- Description:
--- Expects:
--- Returns:
-
-
-
-
-
-
+legal_pawn_move :: Board -> Space -> Space -> String -> [Board]
+legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos=y2, occupant=occ2}) direction
+    -- Space2 is an empty space
+  |elem occ2 "-" =   (replace_space (replace_space board (Space {xpos=x1, ypos=y1, occupant='-'})) (Space {xpos=x2, ypos=y2, occupant=occ1})):[]
+  |elem occ2 "wW" && elem occ1 "b" && "left" == direction = legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=(x2+1), ypos=y2, occupant=occ2}) "none"
+  |elem occ2 "bB" && elem occ1 "w" && "left" == direction = legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=(x2-1), ypos=y2, occupant=occ2}) "none"
+  |elem occ2 "wW" && elem occ1 "b" && "right" == direction = legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=(x2-1), ypos=y2, occupant=occ2}) "none"
+  |elem occ2 "bB" && elem occ1 "w" && "right" == direction = legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=(x2+1), ypos=y2, occupant=occ2}) "none"
+  |elem occ2 "wW" && elem occ1 "b" && "forward" == direction = legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=(x2), ypos=(y2 + 1), occupant=occ2}) "none"
+  |elem occ2 "bB" && elem occ1 "w" && "forward" == direction = legal_pawn_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=(x2), ypos=(y2 - 1), occupant=occ2}) "none"
+  -- move isn't legal
+  |otherwise = [] 
