@@ -1,6 +1,21 @@
 -- Capture The Flag
 
 {-
+STATIC EVALUATION STRATEGY
+
+1) Player has winning board (no Opponent flag) : +50
+2) Player has losing board (no Player flag): -50
+3) Otherwise, count the number of pawns surrounding player's flag * 5
+
+Explanation: We have the standard lose and win situation where the player having a winning board will have the highest value and a losing board will have the lowest value. 
+We chose to use a heuristic based on how many pawns are surrounding the player's flag. Since to win the game, the opponent needs to either capture all the pawns or to capture
+the flag, counting the number of pawns surrounding a flag seemed the best fit to calculate how well the player is doing. For example, the more pawns that are closer to the 
+flag means that the pawn isn't as vulnerable and easily taken by an opponent's pawn. Furthermore, this allows a rough estimate of how many pawns the player currently has as 
+pawns that aren't close to the flag may be as vulnerable and taken the next turn. 
+
+-}
+
+{-
 Revised Algorithm
 
 - Given a list of states, a current player and a max number of lookaheads:
@@ -364,7 +379,7 @@ legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos
 {-
     Description: Evaluates leaf state then propagates values up and picks best move
     Expects: 
-        -- Tree of Moves 
+        -- Tree of Moves (List of Lists of each path in tree)
         -- Board and History
         -- List Parents
         -- Player Character 'w' or 'b'
@@ -373,11 +388,11 @@ legal_move board (Space {xpos=x1, ypos=y1, occupant=occ1}) (Space {xpos=x2, ypos
         -- next move
 -}
 
--- choose_move :: [[String]] -> [String] -> [String] -> Char -> Char -> String
--- choose_move tree board_history parents_list player curr_player 
-  -- | -- go through each list and evalusate and propagate up
-  -- | 
-  -- |
+choose_move :: [[String]] -> [String] -> [String] -> Char -> Char -> String
+choose_move tree board_history parents_list player curr_player 
+  | -- go through each list and evalusate and propagate up
+  | 
+  |
 {-
     Description: Evaluates board with static evaluation
         Strategy:
@@ -416,23 +431,13 @@ static_eval board player
 
 pawns_near_flag :: [Char] -> Char -> Int -> Int -> Int -> Int
 pawns_near_flag board player width flag_index curr_index
-    | board == []                                                                                             = 0
+    | board == []                                                                                                                = 0
     | curr_index == flag_index - 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player           = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
     | curr_index == flag_index + 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player           = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
     | curr_index == flag_index + width - 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player   = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
     | curr_index == flag_index + width && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player       = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
     | curr_index == flag_index + width + 1 && abs (mod curr_index width - mod flag_index width) <= 1 && (head board) == player   = 1 + pawns_near_flag (tail board) player width flag_index (curr_index + 1) 
-    | otherwise                                                                                               = 0 + pawns_near_flag (tail board) player width flag_index (curr_index + 1)
-
-{-
-  
-    Expects: 
-        -- Board to be evaluated
-        -- Player 'w' or 'b'
-    Returns:
-        -- Index
--}
-
+    | otherwise                                                                                                                  = 0 + pawns_near_flag (tail board) player width flag_index (curr_index + 1)
 
 {-
     Description: Returns index of where player flag is 
