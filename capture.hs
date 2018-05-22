@@ -244,10 +244,10 @@ __to_eval__build_adversarial_tree boards adversarial_tree
   |otherwise = error "Something happened in __to_eval__build_adversarial_tree"
 
 __to_eval__build_adversarial_path :: [Board] -> String -> [String] -> [String]
-__to_eval__build_adversarial_path ((Board {spaces = spcs, width=w}):xs) building_state path
-    |null spcs = building_state:path
-    |null spcs /= True = __to_eval__build_adversarial_path ((Board {spaces = spcs, width=w}):xs) (__build_state_string (Board {spaces = spcs, width=w}) building_state) path
-    |otherwise = error "Something happened in __to_eval__build_adversarial_path"
+__to_eval__build_adversarial_path boards building_state path
+    |null boards = building_state:path
+    |null boards /= True = __to_eval__build_adversarial_path ((Board {spaces = (spaces (head boards)), width=(width (head boards))}):[]) (__build_state_string (Board {spaces = (spaces (head boards)), width=(width (head boards))}) building_state) path
+    -- |otherwise = error "Something happened in __to_eval__build_adversarial_path"
 
 __build_state_string :: Board -> String -> String
 __build_state_string (Board {spaces=spcs, width=w}) str
@@ -274,8 +274,9 @@ __build_state_string (Board {spaces=spcs, width=w}) str
 -- decrease the lookahead count here
 capture_helper :: [[Board]] -> Char -> Float -> Char -> [[Board]] -> [[Board]]
 capture_helper boards player max_lookahead current_player result
-  | max_lookahead == 0 && null boards = result
-  | null boards && max_lookahead > 0 && null result /= True = capture_helper
+  |max_lookahead <= 0  = result
+  |null boards  = result
+  |null boards && max_lookahead > 0 && null result /= True = capture_helper
                     result
                     player
                     (max_lookahead - 1)
@@ -379,21 +380,21 @@ move_pawn_left (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=o
 
 move_pawn_right :: Board -> Space -> [Board]
 move_pawn_right (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
-  |elem occ "W" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x-1) (y)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "right") -- for white, moving right actually means moving left, need to check if legal move
-  |elem occ "B" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x+1) (y)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "right") -- for black, moving right just means moving right, need to check if legal move
+  |elem occ "w" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x-1) (y)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "right") -- for white, moving right actually means moving left, need to check if legal move
+  |elem occ "b" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x+1) (y)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "right") -- for black, moving right just means moving right, need to check if legal move
   |otherwise = error "Something happened in move pawn "
 
 move_pawn_forward :: Board -> Space -> [Board]
 move_pawn_forward (Board {spaces=spcs, width=w}) (Space {xpos=x, ypos=y, occupant=occ})
-  |elem occ "W" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x) (y+1)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "forward") -- for white, moving forward actually means moving down, need to check if legal move
-  |elem occ "B" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x) (y+1)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "forward") -- for black, moving forward just means moving forward need to check if legal move
+  |elem occ "w" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x) (y+1)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "forward") -- for white, moving forward actually means moving down, need to check if legal move
+  |elem occ "b" = (legal_pawn_move (Board {spaces=spcs, width=w}) (filter (space_with_position (x) (y+1)) spcs) (Space {xpos=x, ypos=y, occupant=occ}) "forward") -- for black, moving forward just means moving forward need to check if legal move
   |otherwise = error "Something happened in move pawn "
 
 legal_pawn_move :: Board -> [Space] -> Space -> String -> [Board]
 legal_pawn_move board spaces (Space {xpos=x2, ypos=y2, occupant=occ2}) direction
     -- Space2 is an empty space
   |null spaces = []
-  |elem occ2 "-" =   (replace_space (replace_space board (Space {xpos=(xpos (head spaces)), ypos=(ypos (head spaces)), occupant='-'})) (Space {xpos=x2, ypos=y2, occupant=(occupant (head spaces))})):[]
+  |elem occ2 "-" = (replace_space (replace_space board (Space {xpos=(xpos (head spaces)), ypos=(ypos (head spaces)), occupant='-'})) (Space {xpos=x2, ypos=y2, occupant=(occupant (head spaces))})):[]
   |elem occ2 "wW" && elem (occupant (head spaces)) "b" && "left" == direction = legal_pawn_move board ((Space {xpos=(xpos (head spaces)), ypos=(ypos (head spaces)), occupant=(occupant (head spaces))}):[]) (Space {xpos=(x2+1), ypos=y2, occupant=occ2}) "none"
   |elem occ2 "bB" && elem (occupant (head spaces)) "w" && "left" == direction = legal_pawn_move board ((Space {xpos=(xpos (head spaces)), ypos=(ypos (head spaces)), occupant=(occupant (head spaces))}):[])(Space {xpos=(x2-1), ypos=y2, occupant=occ2}) "none"
   |elem occ2 "wW" && elem (occupant (head spaces)) "b" && "right" == direction = legal_pawn_move board ((Space {xpos=(xpos (head spaces)), ypos=(ypos (head spaces)), occupant=(occupant (head spaces))}):[]) (Space {xpos=(x2-1), ypos=y2, occupant=occ2}) "none"
@@ -403,8 +404,9 @@ legal_pawn_move board spaces (Space {xpos=x2, ypos=y2, occupant=occ2}) direction
   |direction == "none" = []
   |elem occ2 "wW" && elem (occupant (head spaces)) "w" = []
   |elem occ2 "bB" && elem (occupant (head spaces)) "b" = []
+  |otherwise = []
   -- move isn't legal
-  |otherwise = error "Something happened in legal pawn"
+  -- |otherwise = error "Something happened in legal pawn"
 
 
 -- Description: Given a list of AdversarialTrees, determines what Board represents the best move for the player
