@@ -428,11 +428,11 @@ legal_pawn_move board spaces (Space {xpos=x2, ypos=y2, occupant=occ2}) direction
         -- next move
 -}
 
-choose_move :: [[String]] -> [String] -> [String] -> Char -> Char -> String
-choose_move tree board_history parents_list player curr_player 
-  | -- go through each list and evalusate and propagate up
-  | 
-  |
+-- choose_move :: [[String]] -> [String] -> [String] -> Char -> Char -> String
+-- choose_move tree board_history parents_list player curr_player 
+--   | -- go through each list and evalusate and propagate up
+--   | 
+--   |
 {-
     Description: Evaluates board with static evaluation
         Strategy:
